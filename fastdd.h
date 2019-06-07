@@ -61,17 +61,6 @@ extern int Quiet;
                             if (!Quiet) fprintf(stderr, fmt,##__VA_ARGS__);\
                          } while(0)
 
-struct progress {
-    int dots;
-    int maxdots;
-};
-typedef struct progress progress;
-
-extern void progress_init(progress *p);
-extern void progress_dot(progress *p);
-extern void progress_done(progress *p);
-extern void progress_err(progress *p);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

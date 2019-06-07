@@ -15,67 +15,12 @@
  */
 
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <fcntl.h>
+//#include <sys/ioctl.h>
+//#include <sys/types.h>
+//#include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <termcap.h>
 #include "fastdd.h"
-
-static int
-screenwidth(int fd)
-{
-    if (isatty(fd)) {
-        struct winsize w;
-
-        if (ioctl(fd, TIOCGWINSZ, &w) == 0) return w.ws_col;
-    }
-
-    return 80;
-}
-
-void
-progress_init(progress *p)
-{
-    p->dots = 0;
-
-    p->maxdots = screenwidth(0);
-}
-
-void
-progress_dot(progress *p)
-{
-    if (Quiet) return;
-
-    if (++p->dots >= p->maxdots) {
-        p->dots = 1;
-        fputc('\n', stderr);
-    }
-
-    fputc('.', stderr);
-    fflush(stderr);
-}
-
-void
-progress_done(progress *p)
-{
-    if (Quiet) return;
-
-    fputs("\b#\n", stderr);
-    fflush(stderr);
-    p->dots = 0;
-}
-
-void
-progress_err(progress *p)
-{
-    if (Quiet) return;
-
-    fputs("\b!\n", stderr);
-    fflush(stderr);
-    p->dots = 0;
-}
 
 
 /*

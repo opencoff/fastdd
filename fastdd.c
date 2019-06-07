@@ -91,7 +91,7 @@ main(int argc, char * const *argv)
     if (a.ifd > 0) close(a.ifd);
     if (a.ofd > 0) close(a.ofd);
 
-    g.elapsed_us = timenow() - st;
+    g.elapsed_us = (timenow() - st) / 1000;
 
 #define d(x)  ((double)(x))
     double   wrspeed = d(g.nwr) / d(g.elapsed_us);

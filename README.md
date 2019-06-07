@@ -78,9 +78,12 @@ That's it.  If you do forget what flags to use, try:
 
     fastdd --help
 
-Unless the `--quiet` option is used, `fastdd` prints a '.' for
-every block of data written (here "block" means `iosize` sized
-quantity).
+Unless the `--quiet` option is used, `fastdd` prints a progress bar
+to show its incremental progress. When the input size is known, the
+progress bar is "rich" (it shows progress & completion %). When the
+input is unknown (e.g., from a pipe), the progress bar is simple -
+only showing number of bytes written. In either case, the sizes are
+human friendly (kB, MB, etc.).
 
 # Performance Numbers
 Anecdotally, on OpenBSD and Darwin, the multi-threaded version seems

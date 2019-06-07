@@ -47,7 +47,7 @@ LIBS += $($(os)_LIBS)
 
 # These libobjs come from portable/src
 libobjs = error.o getopt_long.o strsplit.o strcopy.o strtrim.o \
-	  strtosize.o humanize.o
+	  strtosize.o humanize.o progbar.o
 objs = opts.o args.o utils.o $($(os)_objs) $(libobjs)
 libs = utils.a
 deps = $(objs:.o=.d)
@@ -92,7 +92,7 @@ opts.c opts.h: opts.in
 .PHONY: clean realclean install
 
 test check: $(target-bins)
-	./basic-tests.sh && ./tests.sh tests.in
+	./basic-tests.sh && ./tests.sh tests.inp
 
 install:
 ifeq ($(DESTDIR),)

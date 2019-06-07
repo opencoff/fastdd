@@ -36,7 +36,8 @@
 #include <unistd.h>
 
 #include "error.h"
-#include "utils/utils.h"
+#include "utils/new.h"
+#include "utils/progbar.h"
 #include "fast/syncq.h"
 #include "fastdd.h"
 
@@ -188,6 +189,8 @@ Copy(Acctg *g, Args *aa)
 }
 
 
+#define progressbar_err(p)  progressbar_finish(p, 0, 1)
+
 /*
  * Output writer: reads from the prod-cons queue and writes to
  * output-fd. Errors in writing are captured as "negative" errno and
@@ -201,29 +204,31 @@ buf_writer(void *v)
     Acctg *g   = c->acc;
     progress p;
 
-    progress_init(&p);
+    progressbar_init(&p, Quiet ? -1 : 2, a->insize, P_HUMAN);
+
     while (1) {
         desc *d = SYNCQ_DEQ(c->io);
 
         if (d->size == 0) break;
 
         if (d->err  != 0) {
-            progress_err(&p);
+            progressbar_err(&p);
             return d->err;
         }
 
         int64_t z = fullwrite(a->ofd, d->buf, d->size);
         if (z <= 0) {
-            progress_err(&p);
+            progressbar_err(&p);
             return -z;
         }
 
         SYNCQ_ENQ(c->free, d);
         g->nwr += z;
-        progress_dot(&p);
+        progressbar_update(&p, z);
     }
 
-    progress_done(&p);
+    // don't write a newline; only clear the current line
+    progressbar_finish(&p, 1, 0);
     return 0;
 }
 

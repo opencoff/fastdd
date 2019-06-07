@@ -18,13 +18,15 @@
 #include <fcntl.h>
 
 #include "error.h"
+#include "utils/new.h"
+#include "utils/progbar.h"
 #include "fast/syncq.h"
-#include "utils/utils.h"
 #include "fastdd.h"
 
 //static int pipe_splice_threaded(Acctg *g, Args *a);
 static int pipe_splice_sequential(Acctg *g, Args *a);
 
+#define progressbar_err(p)  progressbar_finish(p, 0, 1)
 
 int
 Copy(Acctg *g, Args *a)
@@ -50,7 +52,8 @@ Copy(Acctg *g, Args *a)
            *p_out = 0;
 
     progress p;
-    progress_init(&p);
+
+    progressbar_init(&p, Quiet ? -1 : 2, a->insize, P_HUMAN);
 
     /*
      * Skip initial bytes on the input & output as needed.
@@ -77,12 +80,12 @@ Copy(Acctg *g, Args *a)
         if (r < 0) {
             if (errno == EAGAIN || errno == EINTR) continue;
 
-            progress_err(&p);
+            progressbar_err(&p);
             error(1, errno, "I/O error while splicing around offset %" PRIu64 "", g->nrd);
         }
         if (r == 0) break;
 
-        progress_dot(&p);
+        progressbar_update(&p, r);
 
         g->nrd += r;
         g->nwr += r;
@@ -92,7 +95,7 @@ Copy(Acctg *g, Args *a)
         }
     }
 
-    progress_done(&p);
+    progressbar_finish(&p, 1, 0);
     return 0;
 }
 
@@ -110,9 +113,10 @@ pipe_splice_sequential(Acctg *g, Args *a)
     int fd[2];
 
     progress p;
-    progress_init(&p);
 
     if (pipe(fd) < 0) error(1, errno, "can't create pipe for splicing");
+
+    progressbar_init(&p, Quiet ? -1 : 2, a->insize, P_HUMAN);
 
     while (!done) {
         size_t  m = n > 0 && n <= a->iosize ? n : a->iosize;
@@ -120,7 +124,7 @@ pipe_splice_sequential(Acctg *g, Args *a)
         if (r < 0) {
             if (errno == EAGAIN || errno == EINTR) continue;
 
-            progress_err(&p);
+            progressbar_err(&p);
             error(1, errno, "I/O read error while splicing around offset %" PRIu64 "", ioff);
         }
         if (r == 0) break;
@@ -132,28 +136,28 @@ pipe_splice_sequential(Acctg *g, Args *a)
             if (n == 0) done = 1;
         }
 
-        // drain the remaining bytes before we end the loop
         while (r > 0) {
             ssize_t s = splice(fd[0], 0, a->ofd, &ooff, r, SPLICE_F_MOVE|SPLICE_F_MORE);
             if (s < 0) {
                 if (errno == EAGAIN || errno == EINTR) continue;
 
-                progress_err(&p);
+                progressbar_err(&p);
                 error(1, errno, "I/O write error while splicing around offset %" PRIu64 "", ooff);
             }
 
             r -= s;
-            progress_dot(&p);
+            progressbar_update(&p, s);
         }
     }
 
-    progress_done(&p);
+    progressbar_finish(&p, 1, 0);
 
     close(fd[0]);
     close(fd[1]);
 
     return 0;
 }
+
 
 #if 0
 
