@@ -1,0 +1,13 @@
+
+%description "Fast diskcopy"
+
+%usage_call opt_usage
+%noversion
+
+# format:
+# long-opt short-opt  struct-member-name type default-value description
+
+quiet     q   quiet       bool   false     "Be silent; don't print progress messages"
+
+
+# vim: tw=128:columns=128:expandtab:sw=4:ts=4:
