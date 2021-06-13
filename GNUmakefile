@@ -98,7 +98,7 @@ install:
 ifeq ($(DESTDIR),)
 	$(error Please use DESTDIR= on the make commandline)
 endif
-	install -C -S $(objdir)/fastdd $(DESTDIR)/bin
+	install $(objdir)/fastdd $(DESTDIR)/fastdd
 
 
 clean:
