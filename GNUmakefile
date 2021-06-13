@@ -94,7 +94,7 @@ opts.c opts.h: opts.in
 test check: $(target-bins)
 	./basic-tests.sh && ./tests.sh tests.inp
 
-install:
+install: all
 ifeq ($(DESTDIR),)
 	$(error Please use DESTDIR= on the make commandline)
 endif
