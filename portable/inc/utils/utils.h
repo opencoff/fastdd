@@ -148,16 +148,29 @@ timenow_us(void)
     return tv.tv_usec + (1000000 * tv.tv_sec);
 }
 
+typedef uint64_t duration_t;
+
+// Number of duration units in a second
+#define __Duration       ((duration_t)1000000000)
+#define __dur(a)         ((duration_t)(a))
+
+#define _Hour(n)         (_Minute(n) * 24)
+#define _Minute(n)       (_Second(n) * 60)
+#define _Second(n)       (__dur(n) * __Duration)
+#define _Millisecond(n)  (_Second(n) / 1000)
+#define _Microsecond(n)  (_Millisecond(n) / 1000)
+#define _Nanosecond(n)   __dur(n)
+
 /*
  * Return time in nanoseconds
  */
-static inline uint64_t
+static inline duration_t
 timenow(void)
 {
     struct timespec tv = {0, 0};
 
     clock_gettime(CLOCK_MONOTONIC, &tv);
-    return tv.tv_nsec + (1000000000 * tv.tv_sec);
+    return tv.tv_nsec + _Second(tv.tv_sec);
 }
 
 
@@ -176,6 +189,11 @@ static inline uint64_t sys_cpu_timestamp(void)
     return x;
 }
 
+static inline void sys_cpu_pause(void)
+{
+    __asm__ volatile ("pause" ::: "memory");
+}
+
 #elif defined(__x86_64__)
 
 
@@ -183,10 +201,43 @@ static inline uint64_t sys_cpu_timestamp(void)
 {
     uint64_t res;
     uint32_t hi, lo;
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    __asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
 
     res = hi;
     return (res << 32) | lo;
+}
+
+
+static inline void sys_cpu_pause(void)
+{
+    __asm__ volatile ("pause" ::: "memory");
+}
+
+#elif defined(__arm64__) || defined(__aarch64__)
+
+// apple silicon
+//
+// cyc_count in cntvct_el0
+// cyc_freq  in cntfreq_el0
+
+#define __sys_read_reg(reg_) ({ \
+                                    uint64_t __res = 0;                                     \
+                                    __asm__ __volatile__("mrs %0," #reg_ : "=r"(__res));    \
+                                    __res;                                                  \
+                              })
+
+
+static inline uint64_t sys_cpu_timestamp(void)
+{
+    // XXX do we worry about freq? For short benchmarks, this is
+    // fine I guess?
+    return __sys_read_reg(cntvct_el0);
+}
+
+
+static inline void sys_cpu_pause(void)
+{
+    __asm__ volatile ("isb\n");
 }
 
 #else

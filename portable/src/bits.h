@@ -22,6 +22,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <stdint.h>
 /*
  * We store token delimiters as bits in a 256-wide bitarray. We
  * compose this large bitarray from an array of uint32_t.
@@ -29,15 +30,16 @@ extern "C" {
  * Checking to see if a character is a delimiter then boils down to
  * checking if the appropriate bit within the long-word is set.
  */
-#define word          uint32_t
-#define WORDBITS      (8 * sizeof(uint32_t))
+#define xword          uint32_t
+#define WORDBITS      (8 * sizeof(xword))
 #define BITVECTSIZE   (256 / WORDBITS)
-#define _word(c)      (((word)(c)) / WORDBITS)
-#define _bitp(c)      (1 << (((word)(c)) % WORDBITS))
+#define _word(c)      (((xword)(c)) / WORDBITS)
+#define _bitp(c)      (1 << (((xword)(c)) % WORDBITS))
 
-typedef struct delim {
-    word    v[BITVECTSIZE];
-} delim;
+struct delim {
+    xword    v[BITVECTSIZE];
+};
+typedef struct delim delim;
 
 #define __init_delim(d)   memset((d)->v, 0, sizeof (d)->v)
 #define __is_delim(d,c)   ((d)->v[_word(c)] &  _bitp(c))
